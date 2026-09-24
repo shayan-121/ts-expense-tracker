@@ -1,0 +1,288 @@
+/* =============================================================================
+   ts-tracker · DESIGN TOKENS
+   -----------------------------------------------------------------------------
+   Tailwind v4 is configured in CSS, not JS. This file is the single source of
+   truth for the raw design values. Nothing here decides *where* a colour is
+   used — that is the job of the semantic layer at the bottom of this file
+   combined with the runtime values in `base.css`.
+
+   Two blocks, two jobs:
+
+     @theme          static values. Tailwind bakes them straight into the
+                     generated utility (e.g. `bg-brand-600` -> `#0B7A63`).
+
+     @theme inline   pass-through values. Tailwind emits the *reference*
+                     (`bg-surface` -> `background-color: var(--surface)`), so
+                     the utility follows light/dark at runtime with no
+                     `dark:` prefix anywhere in the markup.
+
+   See design-guide.md for the usage rules.
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------------
+   Variants
+   -------------------------------------------------------------------------- */
+
+/* Escape hatch only. 99% of theming happens through the semantic tokens, which
+   flip automatically. Reach for `dark:` when a *structural* change is needed
+   (e.g. swapping a border for a shadow), not for colour. */
+@custom-variant dark {
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+      @slot;
+    }
+  }
+  &:where(:root[data-theme='dark'], :root[data-theme='dark'] *) {
+    @slot;
+  }
+}
+
+/* Coarse pointer = finger. Use for hit-area bumps, not for layout. */
+@custom-variant touch (@media (pointer: coarse));
+@custom-variant fine-pointer (@media (pointer: fine));
+
+/* Installed to the home screen / running without browser chrome. */
+@custom-variant standalone (@media (display-mode: standalone));
+
+/* -----------------------------------------------------------------------------
+   Static tokens
+   -------------------------------------------------------------------------- */
+@theme {
+  /* === Breakpoints ========================================================
+     Mobile-first: an unprefixed utility is the phone style, every breakpoint
+     is a min-width override. `xs` is added for the gap between a 320px phone
+     and a 384px+ phone (two-up stat cards start to fit there).
+     sm/md/lg/xl/2xl keep their Tailwind defaults. */
+  --breakpoint-xs: 24rem; /* 384px */
+
+  /* === Containers =========================================================
+     `phone` is the reading-width the app column is capped to, so the layout
+     stays thumb-shaped on a desktop monitor instead of stretching a
+     transaction list to 1920px. `app` is the wider tablet/desktop shell. */
+  --container-phone: 28rem; /* 448px */
+  --container-app: 60rem; /* 960px */
+
+  /* === Type ===============================================================
+     Inter if present, otherwise the platform UI font — both are optimised for
+     small sizes and have the tabular figures money needs. */
+  --font-sans:
+    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Smallest readable label. Below this, ship a bigger size instead. */
+  --text-2xs: 0.6875rem; /* 11px */
+  --text-2xs--line-height: 1rem;
+  --text-2xs--letter-spacing: 0.02em;
+
+  /* Currency figures. Tight leading + negative tracking so a long balance
+     stays compact; always pair with the `tnum` utility. */
+  --text-figure-sm: 1.5rem; /* 24px — row totals, card headers    */
+  --text-figure-sm--line-height: 1.15;
+  --text-figure-sm--letter-spacing: -0.02em;
+
+  --text-figure: 2rem; /* 32px — section balances            */
+  --text-figure--line-height: 1.1;
+  --text-figure--letter-spacing: -0.025em;
+
+  --text-figure-lg: 2.75rem; /* 44px — the one hero balance        */
+  --text-figure-lg--line-height: 1.05;
+  --text-figure-lg--letter-spacing: -0.03em;
+
+  /* === Spacing ============================================================
+     The 0.25rem base scale is untouched. These are named sizes for the fixed
+     chrome, so a component never hardcodes `h-14` and drift apart from the
+     scroll padding that has to clear it. */
+  --spacing-touch: 2.75rem; /* 44px — WCAG 2.5.8 / Apple HIG minimum */
+  --spacing-touch-lg: 3rem; /* 48px — Material minimum              */
+  --spacing-header: 3.5rem; /* 56px — app bar                       */
+  --spacing-nav: 4rem; /* 64px — bottom tab bar                */
+  --spacing-fab: 3.5rem; /* 56px — floating action button        */
+
+  /* === Radius =============================================================
+     Tailwind's numeric scale (rounded-sm … rounded-4xl) is left alone.
+     These are the named shapes; use them so a card is never "sometimes xl". */
+  --radius-field: 0.75rem; /* inputs, selects, buttons */
+  --radius-control: 0.625rem; /* small controls, segments */
+  --radius-card: 1rem; /* cards, list groups       */
+  --radius-sheet: 1.5rem; /* bottom sheet top corners */
+  --radius-pill: 9999px;
+
+  /* === Brand ==============================================================
+     A jade/teal green — reads as money without being literal about it, and
+     stays distinct from the income green, which is a pure emerald.
+     brand-600 is the anchor: it is the darkest step that still looks vivid
+     and the lightest step that clears 4.5:1 with white text (5.3:1). */
+  --color-brand-50: #e9fbf6;
+  --color-brand-100: #ccf5ea;
+  --color-brand-200: #a0ebda;
+  --color-brand-300: #5cd9be;
+  --color-brand-400: #19bf9c;
+  --color-brand-500: #0e9c7f;
+  --color-brand-600: #0b7a63;
+  --color-brand-700: #096351;
+  --color-brand-800: #084f42;
+  --color-brand-900: #073f35;
+  --color-brand-950: #032420;
+
+  /* === Category palette ===================================================
+     Ten hues that stay tellable apart as 8px dots and as pie slices, in both
+     themes. Ordered by how common the category is, so the first few are the
+     most distinct. Treat these as *fills* — see design-guide.md for the text
+     rule (`cat-fun` in particular is too light for text on white). */
+  --color-cat-food: #f97316; /* orange  */
+  --color-cat-transport: #0ea5e9; /* sky     */
+  --color-cat-housing: #8b5cf6; /* violet  */
+  --color-cat-shopping: #ec4899; /* pink    */
+  --color-cat-health: #10b981; /* emerald */
+  --color-cat-bills: #f43f5e; /* rose    */
+  --color-cat-fun: #facc15; /* yellow  */
+  --color-cat-education: #6366f1; /* indigo  */
+  --color-cat-travel: #06b6d4; /* cyan    */
+  --color-cat-other: #64748b; /* slate   */
+
+  /* Same ten, in the order to walk when a chart needs "the next colour". */
+  --color-chart-1: #0b7a63;
+  --color-chart-2: #f97316;
+  --color-chart-3: #0ea5e9;
+  --color-chart-4: #8b5cf6;
+  --color-chart-5: #ec4899;
+  --color-chart-6: #facc15;
+  --color-chart-7: #06b6d4;
+  --color-chart-8: #64748b;
+
+  /* === Motion =============================================================
+     Short and decelerating. Anything over ~300ms feels broken on a phone. */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --animate-fade-in: fade-in 180ms var(--ease-out-quart) both;
+  --animate-fade-out: fade-out 140ms var(--ease-out-quart) both;
+  --animate-rise: rise 220ms var(--ease-out-quart) both;
+  --animate-sheet-in: sheet-in 280ms var(--ease-emphasized) both;
+  --animate-sheet-out: sheet-out 200ms var(--ease-emphasized) both;
+  --animate-pop: pop 200ms var(--ease-spring) both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  @keyframes sheet-out {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Semantic tokens
+   -----------------------------------------------------------------------------
+   These are the ones to actually use in markup. Each maps to a runtime custom
+   property defined in `base.css` with `light-dark()`, so `bg-surface` is
+   correct in both themes and there is no `dark:` to forget.
+   -------------------------------------------------------------------------- */
+@theme inline {
+  /* Backgrounds, back to front */
+  --color-canvas: var(--canvas); /* the page itself              */
+  --color-surface: var(--surface); /* cards, sheets, bars          */
+  --color-surface-muted: var(--surface-muted); /* wells, inactive fills        */
+  --color-surface-raised: var(--surface-raised); /* things above a surface       */
+  --color-overlay: var(--overlay); /* scrim behind a modal         */
+
+  /* Borders */
+  --color-line: var(--line); /* default hairline             */
+  --color-line-strong: var(--line-strong); /* input borders, dividers      */
+
+  /* Text & icons */
+  --color-ink: var(--ink); /* primary                      */
+  --color-ink-muted: var(--ink-muted); /* secondary — 7.5:1            */
+  --color-ink-subtle: var(--ink-subtle); /* tertiary, placeholder — 4.8:1 */
+  --color-ink-inverse: var(--ink-inverse); /* on a dark fill               */
+
+  /* Brand action */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-soft: var(--primary-soft); /* tinted background            */
+  --color-on-primary: var(--on-primary); /* text on --color-primary      */
+
+  /* Money direction. Never the only signal — pair with a +/- sign. */
+  --color-income: var(--income);
+  --color-income-soft: var(--income-soft);
+  --color-expense: var(--expense);
+  --color-expense-soft: var(--expense-soft);
+
+  /* Status */
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-danger: var(--danger); /* destructive actions only     */
+  --color-danger-soft: var(--danger-soft);
+
+  /* Focus ring */
+  --color-ring: var(--ring);
+
+  /* Elevation. Tailwind's shadow-sm…shadow-2xl are untouched; these are the
+     named, theme-aware ones. In dark mode a shadow barely reads, so they get
+     much heavier there — see base.css. */
+  --shadow-card: var(--sh-card);
+  --shadow-raised: var(--sh-raised);
+  --shadow-sheet: var(--sh-sheet);
+  --shadow-nav: var(--sh-nav);
+  --shadow-fab: var(--sh-fab);
+}

@@ -1,0 +1,31 @@
+/* =============================================================================
+   ts-tracker
+   -----------------------------------------------------------------------------
+   Single stylesheet entry point. Imported once, from src/main.tsx.
+
+   Import order is load-bearing — each file builds on the one above it:
+
+     tailwindcss          theme / base / components / utilities layers
+     styles/theme.css     design tokens + custom variants
+     styles/base.css      runtime token values, resets, element defaults
+     styles/components.css  reusable UI classes  (@layer components)
+     styles/utilities.css   custom helpers       (@utility)
+
+   Tailwind is configured in CSS, not in a tailwind.config.js — there isn't
+   one, and adding one won't be picked up. Tokens live in styles/theme.css.
+
+   Conventions and a class-by-class reference: design-guide.md
+   ========================================================================== */
+
+@import 'tailwindcss';
+
+@import './styles/theme.css';
+@import './styles/base.css';
+@import './styles/components.css';
+@import './styles/utilities.css';
+
+/* Explicit scan paths. Auto-detection would find these anyway, but being
+   explicit means class names are still picked up if the project later moves
+   under a monorepo root or a .gitignore rule starts masking a folder. */
+@source '../index.html';
+@source './**/*.{ts,tsx,js,jsx}';

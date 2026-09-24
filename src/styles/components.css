@@ -1,0 +1,928 @@
+/* =============================================================================
+   ts-tracker · COMPONENTS
+   -----------------------------------------------------------------------------
+   Recurring UI shapes as classes, so a button is one token decision made once
+   rather than twelve utilities copy-pasted per usage.
+
+   In `@layer components`, which sorts *below* utilities — so `class="btn
+   btn-primary w-full mt-4"` works and the utilities always win.
+
+   Rules of the road:
+     · Colour only ever comes from a semantic token. No hex below this line.
+     · Every interactive class clears 44px of hit area.
+     · Nothing here sets a margin; spacing is the caller's decision.
+
+   Markup examples for each are in design-guide.md.
+   ========================================================================== */
+
+@layer components {
+  /* ===========================================================================
+     Layout shell
+     ======================================================================== */
+
+  /* Fixed chrome sits at these levels. Kept in one place so a sheet can never
+     end up under the tab bar. */
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    background-color: var(--color-canvas);
+  }
+
+  /* Sticky top bar. Height is the 56px bar *plus* whatever the notch needs. */
+  .appbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: var(--spacing-header);
+    padding-inline: 1rem;
+    padding-top: env(safe-area-inset-top, 0px);
+    border-bottom: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .appbar,
+    .tabbar {
+      background-color: color-mix(in oklab, var(--color-surface) 78%, transparent);
+      -webkit-backdrop-filter: saturate(180%) blur(16px);
+      backdrop-filter: saturate(180%) blur(16px);
+    }
+  }
+
+  .appbar-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* The scrolling region. `pb-nav` worth of padding clears the tab bar, so the
+     final transaction is reachable. */
+  .app-main {
+    flex: 1;
+    width: 100%;
+    margin-inline: auto;
+    max-width: var(--container-phone);
+    padding-inline: 1rem;
+    padding-bottom: calc(var(--nav-inset) + 1rem);
+  }
+
+  @media (min-width: 64rem) {
+    .app-main {
+      max-width: var(--container-app);
+      /* No tab bar on desktop — it becomes a sidebar — so drop the reserve. */
+      padding-bottom: 2rem;
+    }
+  }
+
+  /* --- Bottom tab bar ----------------------------------------------------
+     The primary navigation on a phone: reachable by thumb, always visible.
+     Cap it at 5 items; past that use a "More" tab. */
+  .tabbar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 30;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    align-items: stretch;
+    min-height: var(--spacing-nav);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    border-top: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-nav);
+  }
+
+  @media (min-width: 64rem) {
+    .tabbar {
+      display: none;
+    }
+  }
+
+  .tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1875rem;
+    min-height: var(--spacing-touch);
+    padding: 0.375rem 0.25rem;
+    font-size: var(--text-2xs);
+    font-weight: 500;
+    line-height: 1;
+    color: var(--color-ink-subtle);
+    transition: color 120ms var(--ease-out-quart);
+  }
+
+  /* Drive this from `aria-current="page"` rather than a class, so the
+     accessible state and the visual state cannot disagree. */
+  .tab[aria-current='page'],
+  .tab.is-active {
+    color: var(--color-primary);
+  }
+
+  .tab:active {
+    opacity: 0.6;
+  }
+
+  .tab-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  /* --- Floating action button -------------------------------------------
+     "Add expense" — the one action the app exists for. Sits above the tab
+     bar, offset by the safe-area inset so it never lands on the home bar. */
+  .fab {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right, 0px));
+    bottom: calc(var(--nav-inset) + 1rem);
+    z-index: 40;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--spacing-fab);
+    height: var(--spacing-fab);
+    border-radius: var(--radius-pill);
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+    box-shadow: var(--shadow-fab);
+    transition: transform 140ms var(--ease-spring);
+  }
+
+  .fab:active {
+    transform: scale(0.92);
+  }
+
+  @media (min-width: 64rem) {
+    .fab {
+      bottom: 1.5rem;
+    }
+  }
+
+  /* ===========================================================================
+     Buttons
+     ---------------------------------------------------------------------------
+     `.btn` is the shape; a variant supplies the colour. Always ship both:
+     `class="btn btn-primary"`.
+     ======================================================================== */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: var(--spacing-touch);
+    padding-inline: 1rem;
+    border-radius: var(--radius-field);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    user-select: none;
+    touch-action: manipulation;
+    transition:
+      background-color 140ms var(--ease-out-quart),
+      border-color 140ms var(--ease-out-quart),
+      color 140ms var(--ease-out-quart),
+      transform 120ms var(--ease-out-quart);
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn:disabled,
+  .btn[aria-disabled='true'] {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+  .btn-primary:hover {
+    background-color: var(--color-primary-hover);
+  }
+  .btn-primary:active {
+    background-color: var(--color-primary-active);
+  }
+
+  /* Outlined. The default for anything that isn't the page's main action. */
+  .btn-secondary {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    border: 1px solid var(--color-line-strong);
+  }
+  .btn-secondary:hover {
+    background-color: var(--color-surface-muted);
+  }
+
+  /* Tinted. Use where an outline would add too much visual noise — e.g. in a
+     dense row of filters. */
+  .btn-soft {
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary);
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--color-ink-muted);
+  }
+  .btn-ghost:hover {
+    background-color: var(--color-surface-muted);
+    color: var(--color-ink);
+  }
+
+  /* Destructive only — deleting a transaction or an account. Never for
+     "expense", which is a category of data, not a warning. */
+  .btn-danger {
+    background-color: var(--color-danger);
+    color: #fff;
+  }
+
+  .btn-sm {
+    min-height: 2.25rem;
+    padding-inline: 0.75rem;
+    font-size: var(--text-sm);
+    border-radius: var(--radius-control);
+  }
+
+  .btn-lg {
+    min-height: 3.25rem;
+    padding-inline: 1.5rem;
+    font-size: var(--text-base);
+  }
+
+  /* Full width. The standard for the primary action on a phone form — it is
+     the easiest possible thumb target. */
+  .btn-block {
+    display: flex;
+    width: 100%;
+  }
+
+  /* Square, icon-only. Still needs an aria-label. */
+  .btn-icon {
+    width: var(--spacing-touch);
+    min-width: var(--spacing-touch);
+    padding-inline: 0;
+  }
+  .btn-icon.btn-sm {
+    width: 2.25rem;
+    min-width: 2.25rem;
+  }
+
+  /* ===========================================================================
+     Surfaces
+     ======================================================================== */
+
+  .card {
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* No shadow, no border — a flat well for grouping inside another card. */
+  .card-muted {
+    border-radius: var(--radius-card);
+    background-color: var(--color-surface-muted);
+  }
+
+  .card-pad {
+    padding: 1rem;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .card-footer {
+    padding: 0.875rem 1rem;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .section-title {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-ink-muted);
+  }
+
+  /* All-caps micro label. Used for stat captions, not for body copy. */
+  .overline {
+    font-size: var(--text-2xs);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink-subtle);
+  }
+
+  .divider {
+    height: 1px;
+    border: 0;
+    background-color: var(--color-line);
+  }
+
+  /* ===========================================================================
+     Money
+     ---------------------------------------------------------------------------
+     Colour is never the only carrier of meaning here — always render an
+     explicit sign or a +/− prefix alongside, for colour-blind users and for
+     anyone reading a greyscale screenshot.
+     ======================================================================== */
+
+  .amount {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .amount-in {
+    color: var(--color-income);
+  }
+
+  /* Neutral by default: in a list that is mostly spending, painting every row
+     red is noise. Reserve `.amount-out` for where the contrast with income
+     actually carries information. */
+  .amount-out {
+    color: var(--color-expense);
+  }
+
+  .amount-hero {
+    font-size: var(--text-figure-lg);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+
+  .amount-lg {
+    font-size: var(--text-figure);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+
+  .amount-md {
+    font-size: var(--text-figure-sm);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  /* Currency symbol / minor units set smaller and lighter than the figure. */
+  .amount-affix {
+    font-size: 0.6em;
+    font-weight: 600;
+    opacity: 0.65;
+  }
+
+  /* ===========================================================================
+     Lists & transaction rows
+     ======================================================================== */
+
+  /* Grouped list inside a card: hairlines between rows, none at the ends. */
+  .list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .list > * + * {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .list-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: var(--spacing-touch-lg);
+    padding: 0.75rem 1rem;
+    text-align: left;
+    transition: background-color 120ms var(--ease-out-quart);
+  }
+
+  /* Only for rows that actually navigate somewhere. */
+  .list-row-link:active {
+    background-color: var(--color-surface-muted);
+  }
+
+  /* Sticky day separator in a chronological transaction list. */
+  .list-heading {
+    position: sticky;
+    top: calc(var(--spacing-header) + env(safe-area-inset-top, 0px));
+    z-index: 10;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--color-canvas);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-ink-muted);
+  }
+
+  /* --- Transaction row --------------------------------------------------- */
+  .txn-body {
+    flex: 1;
+    min-width: 0; /* lets the title actually truncate inside a flex row */
+  }
+
+  .txn-title {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .txn-meta {
+    font-size: var(--text-xs);
+    color: var(--color-ink-subtle);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ===========================================================================
+     Category colour
+     ---------------------------------------------------------------------------
+     These read `--cat`, set by the `cat-*` utility:
+       <span class="cat-icon cat-food">🍜</span>
+     Falls back to the neutral category so a missing class is never invisible.
+     ======================================================================== */
+
+  .cat-dot {
+    display: inline-block;
+    flex: none;
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--cat, var(--color-cat-other));
+  }
+
+  /* Round tinted tile holding the category glyph. The 16% tint keeps the
+     glyph legible in both themes without a second token per category. */
+  .cat-icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-pill);
+    font-size: 1.125rem;
+    line-height: 1;
+    background-color: color-mix(in oklab, var(--cat, var(--color-cat-other)) 16%, transparent);
+    color: var(--cat, var(--color-cat-other));
+  }
+
+  .cat-bar {
+    background-color: var(--cat, var(--color-cat-other));
+  }
+
+  /* ===========================================================================
+     Forms
+     ======================================================================== */
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .label {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-ink-muted);
+  }
+
+  .input,
+  .select,
+  .textarea {
+    width: 100%;
+    min-height: var(--spacing-touch);
+    padding: 0.625rem 0.875rem;
+    border-radius: var(--radius-field);
+    border: 1px solid var(--color-line-strong);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    transition:
+      border-color 140ms var(--ease-out-quart),
+      box-shadow 140ms var(--ease-out-quart);
+  }
+
+  /* A visible 1px ring rather than only the focus outline — this one should
+     show for pointer users too, since it confirms which field is live. */
+  .input:focus,
+  .select:focus,
+  .textarea:focus {
+    outline: none;
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ring) 25%, transparent);
+  }
+
+  .textarea {
+    min-height: 5rem;
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  .select {
+    appearance: none;
+    padding-right: 2.25rem;
+    /* Chevron drawn in CSS so it inherits the theme and needs no asset. */
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+      linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position:
+      calc(100% - 1.1rem) center,
+      calc(100% - 0.75rem) center;
+    background-size:
+      0.35rem 0.35rem,
+      0.35rem 0.35rem;
+    background-repeat: no-repeat;
+    color: var(--color-ink);
+  }
+
+  .input-invalid,
+  .input[aria-invalid='true'],
+  .select[aria-invalid='true'],
+  .textarea[aria-invalid='true'] {
+    border-color: var(--color-danger);
+  }
+  .input[aria-invalid='true']:focus {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-danger) 25%, transparent);
+  }
+
+  .hint {
+    font-size: var(--text-xs);
+    color: var(--color-ink-subtle);
+  }
+
+  .error-text {
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--color-danger);
+  }
+
+  /* --- Amount input ------------------------------------------------------
+     The centrepiece of the "add expense" screen: oversized, centred, with the
+     currency symbol pinned to the left. Set `inputmode="decimal"` on the input
+     so phones open the numeric keypad. */
+  .amount-input {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 1rem;
+  }
+
+  .amount-input > input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    text-align: center;
+    font-size: var(--text-figure-lg);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+  }
+
+  .amount-input > input:focus {
+    outline: none;
+  }
+
+  .amount-input-symbol {
+    font-size: var(--text-figure);
+    font-weight: 600;
+    color: var(--color-ink-subtle);
+  }
+
+  /* --- Segmented control -------------------------------------------------
+     Two or three mutually exclusive options (Expense / Income / Transfer).
+     Build it from real radio inputs or role="tab"s, not divs. */
+  .segmented {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface-muted);
+  }
+
+  .segment {
+    flex: 1;
+    min-height: 2.25rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-ink-muted);
+    transition:
+      background-color 140ms var(--ease-out-quart),
+      color 140ms var(--ease-out-quart);
+  }
+
+  .segment[aria-selected='true'],
+  .segment.is-active {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* --- Switch ------------------------------------------------------------
+     Wrap a visually-hidden checkbox; `.switch` is the track, `.switch-thumb`
+     the knob. */
+  .switch {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    width: 3rem;
+    height: 1.75rem;
+    padding: 0.1875rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-line-strong);
+    transition: background-color 160ms var(--ease-out-quart);
+  }
+
+  .switch:has(:checked) {
+    background-color: var(--color-primary);
+  }
+
+  .switch-thumb {
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: var(--radius-pill);
+    background-color: #fff;
+    box-shadow: var(--shadow-card);
+    transition: translate 160ms var(--ease-out-quart);
+  }
+
+  .switch:has(:checked) .switch-thumb {
+    translate: 1.25rem 0;
+  }
+
+  /* ===========================================================================
+     Chips, badges, pills
+     ======================================================================== */
+
+  /* Filter / selector. Interactive, so it gets a 32px minimum and lives in a
+     horizontally scrolling row. */
+  .chip {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2rem;
+    padding-inline: 0.75rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface-muted);
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    white-space: nowrap;
+    scroll-snap-align: start;
+    transition:
+      background-color 140ms var(--ease-out-quart),
+      color 140ms var(--ease-out-quart);
+  }
+
+  .chip[aria-pressed='true'],
+  .chip.is-active {
+    background-color: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+
+  /* Non-interactive status label. Smaller than a chip on purpose, so the two
+     don't get confused. */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface-muted);
+    color: var(--color-ink-muted);
+    font-size: var(--text-2xs);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .badge-income {
+    background-color: var(--color-income-soft);
+    color: var(--color-income);
+  }
+  .badge-expense {
+    background-color: var(--color-expense-soft);
+    color: var(--color-expense);
+  }
+  .badge-warning {
+    background-color: var(--color-warning-soft);
+    color: var(--color-warning);
+  }
+  .badge-info {
+    background-color: var(--color-info-soft);
+    color: var(--color-info);
+  }
+  .badge-danger {
+    background-color: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+
+  /* ===========================================================================
+     Stats & progress
+     ======================================================================== */
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .stat-label {
+    font-size: var(--text-xs);
+    font-weight: 500;
+    color: var(--color-ink-subtle);
+  }
+
+  .stat-value {
+    font-size: var(--text-figure-sm);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Budget bar. Drive the fill with an inline `style="width:62%"` and mirror
+     it on a role="progressbar" with aria-valuenow. */
+  .progress {
+    overflow: hidden;
+    height: 0.5rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface-muted);
+  }
+
+  .progress-bar {
+    height: 100%;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-primary);
+    transition: width 320ms var(--ease-out-quart);
+  }
+
+  /* Approaching the budget. */
+  .progress-bar-warn {
+    background-color: var(--color-warning);
+  }
+  /* Over it. */
+  .progress-bar-over {
+    background-color: var(--color-danger);
+  }
+
+  /* ===========================================================================
+     Overlays
+     ======================================================================== */
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background-color: var(--color-overlay);
+    animation: var(--animate-fade-in);
+  }
+
+  /* Bottom sheet — the phone-native replacement for a centred modal. Anything
+     that would be a dialog on desktop is a sheet here. */
+  .sheet {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    max-height: 92dvh;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    border-top-left-radius: var(--radius-sheet);
+    border-top-right-radius: var(--radius-sheet);
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-sheet);
+    animation: var(--animate-sheet-in);
+  }
+
+  @media (min-width: 40rem) {
+    /* On a tablet or desktop it re-centres into a conventional dialog. */
+    .sheet {
+      inset: auto;
+      top: 50%;
+      left: 50%;
+      translate: -50% -50%;
+      width: min(28rem, calc(100vw - 2rem));
+      max-height: 85dvh;
+      border-radius: var(--radius-sheet);
+      animation: var(--animate-pop);
+    }
+  }
+
+  /* The drag handle. Decorative — real dismissal is the close button. */
+  .sheet-grabber {
+    flex: none;
+    width: 2.25rem;
+    height: 0.25rem;
+    margin: 0.5rem auto 0;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-line-strong);
+  }
+
+  .sheet-header {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .sheet-body {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 1rem 1rem;
+  }
+
+  /* Toast / snackbar. Sits above everything, clear of the tab bar. */
+  .toast {
+    position: fixed;
+    inset-inline: 0;
+    bottom: calc(var(--nav-inset) + 1rem);
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: fit-content;
+    max-width: calc(100vw - 2rem);
+    margin-inline: auto;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-field);
+    background-color: var(--color-ink);
+    color: var(--color-ink-inverse);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    box-shadow: var(--shadow-raised);
+    animation: var(--animate-rise);
+  }
+
+  /* ===========================================================================
+     States
+     ======================================================================== */
+
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 3rem 1.5rem;
+    text-align: center;
+  }
+
+  .empty-title {
+    font-size: var(--text-base);
+    font-weight: 600;
+  }
+
+  .empty-text {
+    font-size: var(--text-sm);
+    color: var(--color-ink-subtle);
+    max-width: 22rem;
+    text-wrap: pretty;
+  }
+
+  /* Loading placeholder. Give it explicit dimensions via utilities —
+     `class="skeleton h-4 w-24"` — sized to the content it stands in for, so
+     the layout doesn't jump when data lands. */
+  .skeleton {
+    border-radius: var(--radius-control);
+    background-color: var(--color-surface-muted);
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in oklab, var(--color-ink) 7%, transparent) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+}

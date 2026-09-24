@@ -1,0 +1,222 @@
+/* =============================================================================
+   ts-tracker · UTILITIES
+   -----------------------------------------------------------------------------
+   Single-purpose helpers that Tailwind doesn't ship. Everything here composes
+   with normal utilities and can be overridden by them.
+
+   `@utility` (not `@layer utilities`) so these sort correctly against core
+   utilities and respond to variants — `sm:pb-safe`, `touch:min-h-touch`.
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------------
+   Safe areas
+   -----------------------------------------------------------------------------
+   Only meaningful because index.html sets `viewport-fit=cover`. Without that
+   the insets are all 0 and the browser letterboxes the notch instead.
+   The `, 0px` fallback keeps the calc() valid on browsers without env().
+   -------------------------------------------------------------------------- */
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility px-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+@utility mt-safe {
+  margin-top: env(safe-area-inset-top, 0px);
+}
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Add the inset *on top of* the element's own padding. For a bar that needs
+   both breathing room and notch clearance. */
+@utility pt-safe-header {
+  padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+}
+@utility pb-safe-nav {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* The one every scroll container needs: clears the fixed tab bar so the last
+   transaction isn't stuck underneath it. */
+@utility pb-nav {
+  padding-bottom: var(--nav-inset);
+}
+@utility scroll-pb-nav {
+  scroll-padding-bottom: var(--nav-inset);
+}
+
+/* -----------------------------------------------------------------------------
+   Numerals
+   -------------------------------------------------------------------------- */
+
+/* Fixed-width digits. Mandatory on every currency figure, or a ticking total
+   jitters and a column of amounts fails to line up. */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Slashed zero — for reference numbers and account IDs, not money. */
+@utility znum {
+  font-feature-settings: 'zero' 1;
+}
+
+/* -----------------------------------------------------------------------------
+   Scrolling
+   -------------------------------------------------------------------------- */
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* A scroll region that doesn't chain to the page when it hits its end —
+   stops a modal scroll from dragging the list behind it. */
+@utility scroll-contain {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Horizontal chip / date strip. Pair with `no-scrollbar` and `snap-start`
+   on the children. */
+@utility scroll-row {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Touch feedback
+   -------------------------------------------------------------------------- */
+
+/* Phones have no hover, so pressed state is the only affordance. Scale is used
+   rather than colour so it reads instantly on any background. */
+@utility press {
+  transition:
+    transform 120ms var(--ease-out-quart),
+    opacity 120ms var(--ease-out-quart);
+  &:active {
+    transform: scale(0.97);
+  }
+}
+@utility press-sm {
+  transition: transform 120ms var(--ease-out-quart);
+  &:active {
+    transform: scale(0.985);
+  }
+}
+
+/* Grows the *hit* area to 44px without growing the visual box — for small
+   icons that must stay small. */
+@utility hit-44 {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 50% 50% 50% 50%;
+    width: var(--spacing-touch);
+    height: var(--spacing-touch);
+    translate: -50% -50%;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Category colour
+   -----------------------------------------------------------------------------
+   Sets `--cat`, which .cat-dot / .cat-icon / .cat-bar read. One class per
+   element instead of three:  <span class="cat-dot cat-food">
+   Accepts a theme category (`cat-food`) or an arbitrary colour (`cat-[#ff0]`).
+   -------------------------------------------------------------------------- */
+@utility cat-* {
+  --cat: --value(--color-cat-*, [color]);
+}
+
+/* -----------------------------------------------------------------------------
+   Layout
+   -------------------------------------------------------------------------- */
+
+/* The app column: full-bleed on a phone, centred and capped on anything wider
+   so a transaction list never stretches to monitor width. */
+@utility app-col {
+  width: 100%;
+  margin-inline: auto;
+  max-width: var(--container-phone);
+  padding-inline: 1rem;
+}
+
+/* Responsive card grid with no breakpoint bookkeeping — cards wrap when they
+   no longer fit at their minimum. */
+@utility grid-fit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+  gap: 0.75rem;
+}
+
+/* Full viewport height that tracks the collapsing mobile URL bar. */
+@utility h-screen-d {
+  height: 100dvh;
+}
+@utility min-h-screen-d {
+  min-height: 100dvh;
+}
+
+/* -----------------------------------------------------------------------------
+   Text
+   -------------------------------------------------------------------------- */
+
+@utility truncate-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Visible to screen readers, invisible on screen. For the label on an
+   icon-only button and for live-region announcements. */
+@utility sr-only-focusable {
+  &:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Misc
+   -------------------------------------------------------------------------- */
+
+/* Textarea that grows with its content, no JS. */
+@utility autosize {
+  field-sizing: content;
+}
+
+/* Frosted bar. Degrades to the plain surface colour where backdrop-filter is
+   unsupported — which is why the fallback background is set first. */
+@utility glass {
+  background-color: var(--color-surface);
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    background-color: color-mix(in oklab, var(--color-surface) 78%, transparent);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+    backdrop-filter: saturate(180%) blur(16px);
+  }
+}
